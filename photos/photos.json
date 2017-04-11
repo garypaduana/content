@@ -132,11 +132,6 @@
         },
         {
             "title": "",
-            "url": "https://s3-us-west-2.amazonaws.com/paduana-photos/photography/thumbnails",
-            "thumbnail": "https://s3-us-west-2.amazonaws.com/paduana-photos/photography/thumbnails/thumbnails"
-        },
-        {
-            "title": "",
             "url": "https://s3-us-west-2.amazonaws.com/paduana-photos/photography/very.large.array.jpg",
             "thumbnail": "https://s3-us-west-2.amazonaws.com/paduana-photos/photography/thumbnails/very.large.array.jpg"
         },
