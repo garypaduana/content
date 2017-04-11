@@ -4,37 +4,37 @@
       "id": 0,
       "date": "April 5, 2015",
       "title": "First entry!",
-      "content_url": "https://rawgit.com/garypaduana/blog/master/blog_0.html"
+      "content_url": "https://rawgit.com/garypaduana/content/master/blog/blog_0.html"
     },
     {
       "id": 1,
       "date": "April 5, 2015",
       "title": "Dynamic content without a database (yet!)",
-      "content_url": "https://rawgit.com/garypaduana/blog/master/blog_1.html"
+      "content_url": "https://rawgit.com/garypaduana/content/master/blog/blog_1.html"
     },
     {
       "id": 2,
       "date": "June 3, 2016",
       "title": "Migrating to Grails 3",
-      "content_url": "https://rawgit.com/garypaduana/blog/master/blog_2.html"
+      "content_url": "https://rawgit.com/garypaduana/content/master/blog/blog_2.html"
     },
     {
       "id": 3,
       "date": "July 10, 2016",
       "title": "Home NAS, Part 1: Reliable Storage with ZFS and Ubuntu 16.04",
-      "content_url": "https://rawgit.com/garypaduana/blog/master/blog_3.html"
+      "content_url": "https://rawgit.com/garypaduana/content/master/blog/blog_3.html"
     },
     {
       "id": 4,
       "date": "July 21, 2016",
       "title": "Home NAS, Part 2: Replacing Disks and Adding Storage",
-      "content_url": "https://rawgit.com/garypaduana/blog/master/blog_4.html"
+      "content_url": "https://rawgit.com/garypaduana/content/master/blog/blog_4.html"
     },
     {
       "id": 5,
       "date": "July 24, 2016",
       "title": "Home NAS, Part 3: Local and Cloud Backups",
-      "content_url": "https://rawgit.com/garypaduana/blog/master/blog_5.html"
+      "content_url": "https://rawgit.com/garypaduana/content/master/blog/blog_5.html"
     }
   ]
 }
