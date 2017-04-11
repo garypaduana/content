@@ -1,0 +1,116 @@
+<p>There are two ways to expand the capacity of a zpool: replace every disk with larger ones or add vdevs to the
+  pool. It is good to practice these scenarios when your dataset is newly created and not storing critical data yet.</p>
+
+<h4>Replace each disk</h4>
+
+<p>ZFS can use files instead of physical disks and I will be using them for demonstration purposes. Starting with
+  two files in a mirrored vdev configuration, it is possible to increase the total storage available to the pool by
+  replacing each of the files with larger files.</p>
+
+<div class="code">
+  <pre class="brush: bash">
+    sudo zpool create testpool mirror /home/gary/file.1 /home/gary/file.2
+    
+    sudo zpool list
+    NAME       SIZE  ALLOC   FREE  EXPANDSZ   FRAG    CAP  DEDUP  HEALTH  ALTROOT
+    testpool   992M    50K   992M         -     0%     0%  1.00x  ONLINE  -
+  </pre>
+</div>
+
+<p>Create two larger files to be used as replacements:</p>
+
+<div class="code">
+  <pre class="brush: bash">
+    dd if=/dev/zero of=/home/gary/file.3 bs=1024k count=2000
+    dd if=/dev/zero of=/home/gary/file.4 bs=1024k count=2000
+  </pre>
+</div>
+
+<p>Replace the old files:</p>
+
+<div class="code">
+  <pre class="brush: bash">
+    sudo zpool replace testpool /home/gary/file.1 /home/gary/file.3
+    sudo zpool replace testpool /home/gary/file.2 /home/gary/file.4
+  </pre>
+</div>
+
+<p>Update the configuration:</p>
+
+<div class="code">
+  <pre class="brush: bash">
+    sudo zpool set autoexpand=off testpool
+    sudo zpool set autoexpand=on testpool
+    sudo zpool online -e testpool /home/gary/file.3
+    sudo zpool online -e testpool /home/gary/file.4
+  </pre>
+</div>
+
+<p>Check the pool:</p>
+
+<div class="code">
+  <pre class="brush: bash">
+    sudo zpool list
+
+    NAME       SIZE  ALLOC   FREE  EXPANDSZ   FRAG    CAP  DEDUP  HEALTH  ALTROOT
+    testpool  1.94G   122K  1.94G         -     0%     0%  1.00x  ONLINE  -
+  </pre>
+</div>
+<p>The pool is now showing double the capacity at 1.94G.</p>
+
+<h4>Add more vdevs to the pool</h4>
+
+<p>Starting back at the original setup:</p>
+
+<div class="code">
+  <pre class="brush: bash">
+    sudo zpool destroy testpool
+    sudo zpool create testpool mirror /home/gary/file.1 /home/gary/file.2
+    sudo zpool status
+
+    pool: testpool
+    state: ONLINE
+    scan: none requested
+    config:
+
+    NAME                   STATE     READ WRITE CKSUM
+    testpool               ONLINE       0     0     0
+      mirror-0             ONLINE       0     0     0
+        /home/gary/file.1  ONLINE       0     0     0
+        /home/gary/file.2  ONLINE       0     0     0
+
+    errors: No known data errors
+  </pre>
+</div>
+
+<p>Add a new vdev with the other 2GB files:</p>
+
+<div class="code">
+  <pre class="brush: bash">
+    sudo zpool add testpool mirror /home/gary/file.3 /home/gary/file.4
+    sudo zpool list
+
+    NAME       SIZE  ALLOC   FREE  EXPANDSZ   FRAG    CAP  DEDUP  HEALTH  ALTROOT
+    testpool  2.91G   100K  2.91G         -     0%     0%  1.00x  ONLINE  -
+
+    sudo zpool status
+
+    pool: testpool
+    state: ONLINE
+    scan: none requested
+    config:
+
+    NAME                   STATE     READ WRITE CKSUM
+        testpool               ONLINE       0     0     0
+          mirror-0             ONLINE       0     0     0
+            /home/gary/file.1  ONLINE       0     0     0
+            /home/gary/file.2  ONLINE       0     0     0
+          mirror-1             ONLINE       0     0     0
+            /home/gary/file.3  ONLINE       0     0     0
+            /home/gary/file.4  ONLINE       0     0     0
+
+    errors: No known data errors
+  </pre>
+</div>
+
+<p>The pool is now showing <span class="mono">992M (mirror-0) + 1.94G (mirror-1) = 2.91G (testpool)</span></p>

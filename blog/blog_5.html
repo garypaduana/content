@@ -1,0 +1,112 @@
+<h4>Local Backups</h4>
+<p>
+  Given a primary zpool of <span class="mono">/tank</span> and a backup zpool of <span class="mono">/garage</span>, the
+  following code snippet will provide a very fast and robust backup strategy that sends snapshots from one pool to
+  another. Compared to other archiving tools such as rsync, this approach is much more efficient because ZFS knows
+  exactly which blocks have changed from one snapshot to another and does not need to analyze the content at the file
+  level. This will pay off when backing up large files such as encrypted file containers. You will not have to read the
+  entirety of an 800G encrypted file container just to identify the 30M that have changed, for instance.
+</p>
+
+<p>Create a snapshot of your dataset and perform the initial backup:</p>
+
+<div class="code">
+  <pre class="brush: bash">
+    sudo zfs snapshot -r tank@2016-06-17
+    sudo zfs send -R tank@2016-06-17 | sudo zfs recv garage/tank
+  </pre>
+</div>
+
+<ul>
+  <li><span class="mono">snapshot -r</span> will give all child datasets the same snapshot label.</li>
+  <li><span class="mono">send -R</span> will send all child datasets.</li>
+  <li><span class="mono">garage/tank</span> must not exist for the initial backup.</li>
+</ul>
+
+<p>Make changes to your data, take another snapshot, then send the incremental changes to the backup destination:</p>
+
+<div class="code">
+  <pre class="brush: bash">
+    sudo zfs snapshot -r tank@2016-06-18
+    sudo zfs send -R -i tank@2016-06-17 tank@2016-06-18 | sudo zfs recv garage/tank
+    sudo zpool export garage
+  </pre>
+</div>
+
+<ul>
+  <li>Take snapshots as necessary on the primary pool.</li>
+  <li>Figure out what the most recent snapshot is on the backup and provide it as the first argument to the send
+    command. The second argument should be the most recently made snapshot and it's acceptable if there are intermediate
+    snapshots.</li>
+  <li>Export the pool and power off or remove the drives when the backup is complete.</li>
+</ul>
+
+<h4>Cloud Backups</h4>
+<p>Cloud storage aims to simplify storage concerns for the end user, but it introduces its own collection of issues
+  as well. Users should no longer have to worry about all of the inconveniences that come along with long-term, durable
+  storage such backups, version control, integrity (bitrot), hardware and drive replacement, expansion, electricity,
+  noise, and up-front purchase costs. In exchange for these benefits, however, users who care about their privacy,
+  security, and time need to be aware of encryption (local vs. remote), synchronization and restoration durations, and
+  getting locked into proprietary formats that cannot be easily migrated to other systems or software if desired.</p>
+<p>
+  Some backup solutions, such as <a href="https://www.crashplan.com">Crashplan</a>, will attempt to provide encryption
+  along with the provided storage. This may be acceptable to some users, but separating concerns by having one
+  application that provides encryption and another that provides storage synchronization seems to be better security.
+</p>
+<b>Encryption</b>
+<ul>
+  <li><a href="https://veracrypt.codeplex.com/">Veracrypt / Truecrypt</a></li>
+  <li><a href="https://vgough.github.io/encfs/">EncFS</a></li>
+  <li><a href="https://www.cryfs.org/">CryFS</a></li>
+</ul>
+<b>Synchronization</b>
+<ul>
+  <li><a href="http://rclone.org/">rclone</a></li>
+  <li><a href="https://github.com/yadayada/acd_cli">acd_cli</a></li>
+  <li><a href="http://duplicity.nongnu.org/">Duplicity</a></li>
+  <li><a href="http://www.duplicati.com/">Duplicati</a></li>
+  <li><a href="http://www.2brightsparks.com/syncback/sbpro.html">SyncBack Pro</a></li>
+  <li><a href="https://www.arqbackup.com/">Arq</a></li>
+</ul>
+
+<b>Automation</b>
+
+<p>Cloud synchronization can be easily automated even when using command line tools. I synchronize with Amazon Cloud
+  Drive on a daily basis using rclone. The following script will only allow one backup session at a time to occur.</p>
+
+<div class="code">
+  <pre class="brush: bash">
+        #!/bin/bash
+        . /home/gary/.profile
+        (
+            flock -x -w 10 200 || exit 1
+            string="$(df)" 
+            if [[ $string == *"encfs/media"* ]]
+            then
+                echo "media is mounted";
+                rclone sync --bwlimit $1k --exclude o9Lb4SkpD-4BREOdivP7CdNV/** --transfers 1 /home/gary/encfs/media ACD:media;
+            fi
+        ) 200>/var/lock/.acdBackup.exclusivelock
+      </pre>
+</div>
+
+<ul class="clean">
+  <li>2. adds rclone to the PATH</li>
+  <li>4. creates a file lock so that long-running jobs don't bump into each other</li>
+  <li>5. get all mounted file systems</li>
+  <li>6. check to see if my desired drive is mounted</li>
+  <li>9. execute rclone and exclude a directory that has hard links to prevent duplicate uploads</li>
+</ul>
+
+<p>Now that we have a script that performs the sync, we can schedule it as needed using crontab.</p>
+<div class="code">
+  <pre class="brush: bash">
+        crontab -e
+        40 0 * * * /home/gary/acdBackup.sh 1200 >> /home/gary/acdBackup.history 2>&1
+      </pre>
+</div>
+
+<ul class="clean">
+  <li>1. Edit the crontab to define scheduled jobs.</li>
+  <li>2. This will execute the script every night at 12:40AM with a bandwidth limit of 1200KB/sec.</li>
+</ul>

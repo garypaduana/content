@@ -1,0 +1,12 @@
+<p>Grails has been great so far for rapid development, but it can be limiting when it comes to deployments.  
+  Even in the early stages of this website, the generated .war file is around 40MB.  I'd prefer to upload 
+  files of this size from a stable terrestrial service instead of a 3G hotspot.  Sometimes it's just not 
+  possible to upload such a large file when traveling if network reception is spotty or only ~2G is available.  
+  I often times find myself in remote areas for days at a time and it would be nice to update this site 
+  without uploading a new distribution or relying on a hosted database to provide dynamic content.
+</p>
+<p>I've decided to use a .json file as a datastore for blog postings and image gallery definitions.  The 
+  content will be stored on either GitHub or Dropbox and read as needed to fulfill requests.  This will incur 
+  a small latency penalty since the server will need to read and parse the file with each request, but it 
+  should act as a great alternative to a database instance in low-volume scenarios.
+</p>
